@@ -20,14 +20,18 @@ ib = IB()
 
 async def publish_to_kafka(message):
     try:
+        logging.info("Initializing Kafka producer...")
         producer = AIOKafkaProducer(
             bootstrap_servers=kafka_config['broker_url'],
             value_serializer=lambda m: json.dumps(m).encode('utf-8')
         )
         await producer.start()
+        logging.info("Kafka producer started.")
+        logging.info(f"Publishing message to Kafka topic {kafka_config['topics']['ib_order_responses_dev']}: {message}")
         await producer.send_and_wait(kafka_config['topics']['ib_order_responses_dev'], message)
+        logging.info("Message published successfully.")
         await producer.stop()
-        logging.info(f"Published message to Kafka topic {kafka_config['topics']['ib_order_responses_dev']}: {message}")
+        logging.info("Kafka producer stopped.")
     except Exception as e:
         logging.error(f"Error publishing message to Kafka: {e}")
 
@@ -42,7 +46,7 @@ async def place_ib_order():
         contract.conId = 673277361  # Replace with the conId for the instrument
 
         # Send an order
-        order = MarketOrder('BUY', 1)
+        order = MarketOrder('BUY', 10)
         trade = ib.placeOrder(contract, order)
 
         # Log the message sent to IB
@@ -66,6 +70,7 @@ async def place_ib_order():
 
 async def consume_from_kafka():
     try:
+        logging.info("Initializing Kafka consumer...")
         consumer = AIOKafkaConsumer(
             kafka_config['topics']['ib_order_requests_dev'],
             bootstrap_servers=kafka_config['broker_url'],
@@ -74,6 +79,7 @@ async def consume_from_kafka():
         )
 
         await consumer.start()
+        logging.info("Kafka consumer started.")
 
         async for message in consumer:
             try:
@@ -89,13 +95,16 @@ async def consume_from_kafka():
         logging.error(f"Error consuming from Kafka: {e}")
     finally:
         await consumer.stop()
+        logging.info("Kafka consumer stopped.")
 
 async def main():
     logging.info("Starting script...")
 
     try:
         # Connect to IB
+        logging.info("Connecting to IB...")
         ib.connect('127.0.0.1', 4002, clientId=2)
+        logging.info("Connected to IB.")
 
         # Start Kafka consumer to listen for messages and trigger order placement
         consume_task = asyncio.create_task(consume_from_kafka())
@@ -112,6 +121,7 @@ async def main():
     finally:
         # Disconnect from IB after script execution
         ib.disconnect()
+        logging.info("Disconnected from IB.")
 
 if __name__ == "__main__":
     asyncio.run(main())
