@@ -25,7 +25,7 @@ This project demonstrates integration with Interactive Brokers (IB) using Kafka 
    - **Viewing Order Responses:** Expect updates and notifications on order status changes (e.g., filled orders) from IB.
 
 4. **Current Issues:**
-   - **Issue 1:** order is sent to IB in pesndingSubmit stste, this is fine as its part of the state transition, 
+   - **Issue 1:** order is sent to IB in pendingSubmit state, this is fine as its part of the state transition, 
                    but we are not receiving the subsequent messages for the fills etc.
 
 5. **Installation:**
