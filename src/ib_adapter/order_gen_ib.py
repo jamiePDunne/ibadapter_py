@@ -24,6 +24,7 @@ kafka_config = get_kafka_config()
 # Establish IB connection
 ib = IB()
 
+
 async def publish_to_kafka(message):
     try:
         logging.info("Initializing Kafka producer...")
@@ -41,6 +42,7 @@ async def publish_to_kafka(message):
     except Exception as e:
         logging.error(f"Error publishing message to Kafka: {e}")
 
+
 async def place_ib_order():
     try:
         # Define the contract details
@@ -52,7 +54,7 @@ async def place_ib_order():
         contract.conId = 673277361  # Replace with the conId for the instrument
 
         # Send an order
-        order = MarketOrder('BUY', 10)
+        order = MarketOrder('SELL', 16)
         trade = ib.placeOrder(contract, order)
 
         # Log the message sent to IB
@@ -73,6 +75,7 @@ async def place_ib_order():
 
     except Exception as e:
         logging.error(f"Error placing order: {e}")
+
 
 async def consume_from_kafka():
     try:
@@ -103,21 +106,41 @@ async def consume_from_kafka():
         await consumer.stop()
         logging.info("Kafka consumer stopped.")
 
+
+def orderStatusHandler(trade):
+    try:
+        logging.info(f"Order status updated: {trade.orderStatus.status}")
+
+        # Construct message for Kafka
+        order_response_message = {
+            'order_status': trade.orderStatus.status,
+            'order_details': str(trade.order)  # Convert order object to string or format as needed
+        }
+
+        # Publish order response to Kafka
+        asyncio.run(publish_to_kafka(order_response_message))
+    except Exception as e:
+        logging.error(f"Error handling order status update: {e}")
+
+
 async def main():
     logging.info("Starting script...")
 
     try:
         # Connect to IB
         logging.info("Connecting to IB...")
-        ib.connect('127.0.0.1', 4002, clientId=2)
+        await ib.connectAsync('127.0.0.1', 4002, clientId=2)
         logging.info("Connected to IB.")
+
+        # Register event handlers
+        ib.orderStatusEvent += orderStatusHandler
 
         # Start Kafka consumer to listen for messages and trigger order placement
         consume_task = asyncio.create_task(consume_from_kafka())
 
-        # Run IB event loop
+        # Keep the event loop running
         while True:
-            ib.waitOnUpdate()
+            ib.sleep(1)  # Sleep for a short interval to keep the loop running
             await asyncio.sleep(0)  # Yield control to asyncio event loop
 
     except KeyboardInterrupt:
@@ -128,6 +151,7 @@ async def main():
         # Disconnect from IB after script execution
         ib.disconnect()
         logging.info("Disconnected from IB.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
