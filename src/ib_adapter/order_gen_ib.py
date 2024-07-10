@@ -12,6 +12,12 @@ nest_asyncio.apply()
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
+# Define a file handler
+file_handler = logging.FileHandler('ib_kafka_integration.log')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s'))
+logging.getLogger().addHandler(file_handler)
+
 # Get Kafka configuration
 kafka_config = get_kafka_config()
 
