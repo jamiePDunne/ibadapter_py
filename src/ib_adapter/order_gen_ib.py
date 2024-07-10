@@ -1,8 +1,10 @@
 # ib_adapter/order_gen_ib.py
 
 from ib_insync import *
+import json
 import logging
 import asyncio
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from config.kafka_config import get_kafka_config
 
 # Set up logging
@@ -14,6 +16,19 @@ kafka_config = get_kafka_config()
 # Establish IB connection
 ib = IB()
 ib.connect('127.0.0.1', 4002, clientId=2)  # Adjust host, port, and clientId as necessary
+
+async def publish_to_kafka(message):
+    try:
+        producer = AIOKafkaProducer(
+            bootstrap_servers=kafka_config['broker_url'],
+            value_serializer=lambda m: json.dumps(m).encode('utf-8')
+        )
+        await producer.start()
+        await producer.send_and_wait(kafka_config['topics']['ib_order_responses_dev'], message)
+        await producer.stop()
+        logging.info(f"Published message to Kafka topic {kafka_config['topics']['ib_order_responses_dev']}: {message}")
+    except Exception as e:
+        logging.error(f"Error publishing message to Kafka: {e}")
 
 async def place_ib_order():
     try:
@@ -35,6 +50,15 @@ async def place_ib_order():
 
         # Print order status
         logging.info(f"Order status: {trade.orderStatus.status}")
+
+        # Construct message for Kafka
+        order_response_message = {
+            'order_status': trade.orderStatus.status,
+            'order_details': str(order)  # Convert order object to string or format as needed
+        }
+
+        # Publish order response to Kafka
+        await publish_to_kafka(order_response_message)
 
     except Exception as e:
         logging.error(f"Error placing order: {e}")
@@ -69,8 +93,11 @@ async def main():
     logging.info("Starting script...")
 
     try:
-        # Start Kafka consumer to listen for messages and trigger order placement
-        await consume_from_kafka()
+        while True:
+            # Start Kafka consumer to listen for messages and trigger order placement
+            await consume_from_kafka()
+    except KeyboardInterrupt:
+        logging.info("Stopping script...")
     except Exception as e:
         logging.error(f"Error in main: {e}")
     finally:
