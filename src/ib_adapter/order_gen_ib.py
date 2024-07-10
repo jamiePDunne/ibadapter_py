@@ -1,11 +1,13 @@
-# ib_adapter/order_gen_ib.py
-
 from ib_insync import *
 import json
 import logging
 import asyncio
+import nest_asyncio
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from config.kafka_config import get_kafka_config
+
+# Apply nest_asyncio to allow nested event loops
+nest_asyncio.apply()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
@@ -15,7 +17,6 @@ kafka_config = get_kafka_config()
 
 # Establish IB connection
 ib = IB()
-ib.connect('127.0.0.1', 4002, clientId=2)  # Adjust host, port, and clientId as necessary
 
 async def publish_to_kafka(message):
     try:
@@ -93,9 +94,17 @@ async def main():
     logging.info("Starting script...")
 
     try:
+        # Connect to IB
+        ib.connect('127.0.0.1', 4002, clientId=2)
+
+        # Start Kafka consumer to listen for messages and trigger order placement
+        consume_task = asyncio.create_task(consume_from_kafka())
+
+        # Run IB event loop
         while True:
-            # Start Kafka consumer to listen for messages and trigger order placement
-            await consume_from_kafka()
+            ib.waitOnUpdate()
+            await asyncio.sleep(0)  # Yield control to asyncio event loop
+
     except KeyboardInterrupt:
         logging.info("Stopping script...")
     except Exception as e:
