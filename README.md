@@ -1,5 +1,4 @@
-I understand now. You want to specifically communicate the current issues or known problems with your code. Here’s how you can add that information effectively to your README:
-
+#
 ---
 
 # Interactive Brokers Kafka Integration
