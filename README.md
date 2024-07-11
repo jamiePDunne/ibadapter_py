@@ -20,8 +20,8 @@ This project demonstrates integration with Interactive Brokers (IB) using Kafka 
    - **config/kafka_config.py:** Configuration file for Kafka broker and topics.
 
 3. **Expected Outcome:**
-   - **Triggering Market Orders:** Expect messages indicating successful submission of market orders to IB.
-   - **Viewing Order Requests:** Expect to see details of orders sent to IB for execution.
+   - **Triggering Market Orders:** Expect order event messages .
+   - **Viewing Order Requests:** Expect to see details trigger messages.
    - **Viewing Order Responses:** Expect updates and notifications on order status changes (e.g., filled orders) from IB.
 
 4**Installation:**
