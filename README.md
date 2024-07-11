@@ -13,7 +13,8 @@ This project demonstrates integration with Interactive Brokers (IB) using Kafka 
 
 2. **Files to Run:**
 
-   - **send_kafka_message.py:** Sends market orders to IB via Kafka.
+   - **send_kafka_message.py:** generates an order trigger message.
+   - **order_gen.py:** submits an order to ib API when  a trigger message is received via Kafka.
    - **inspecotr_ib_order_requests.py:** Monitors and sends order requests to IB.
    - **inspecotr_ib_order_responses.py:** Listens for and displays order responses from IB.
    - **config/kafka_config.py:** Configuration file for Kafka broker and topics.
@@ -28,14 +29,4 @@ This project demonstrates integration with Interactive Brokers (IB) using Kafka 
      ```
      pip install -r requirements.txt
      ```
-
-5**Troubleshooting:**
-   - If encountering issues beyond those listed above, check the following:
-     - Ensure Kafka (`localhost:9092`) and IB API/TWS are running and accessible.
-     - Verify configurations in `config/kafka_config.py` match your Kafka setup.
-     - Review logs or error messages printed by each script for specific issues.
-     - Check the Interactive Brokers API documentation for any known issues or updates.
-
-
 ---
-t.

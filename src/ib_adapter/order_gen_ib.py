@@ -54,7 +54,7 @@ async def place_ib_order():
         contract.conId = 673277361  # Replace with the conId for the instrument
 
         # Send an order
-        order = MarketOrder('SELL', 16)
+        order = MarketOrder('BUY', 1)
         trade = ib.placeOrder(contract, order)
 
         # Log the message sent to IB
